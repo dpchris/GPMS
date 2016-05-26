@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import re
+import re, math
 
 #fasta test (from insilico site)
 
-with open("/home/david/Documents/fasta_example.txt","r") as myfile :  #load of the fasta file
-	myfile.readline()                                             #we don't keep the header
-	fasta = myfile.read().replace('\n', '')                       #erase \n to have a single string
+with open("/home/david/Documents/complete_genomes/brucellaceae/Brucella_abortus_104M_NZ_CP009625.1_NZ_CP009626.1.fa","r") as myfile :  #load of the fasta file
+	#myfile.readline()                                             #we don't keep the header
+	fasta = myfile.read()
 
-primer="vrrB1_9bp_229bp_16U ATAGGTGGTTTTCCGCAAGTTATTC GATGAGTTTGATAAAGAATAGCCTGTG"
+with open("/home/david/Documents/complete_genomes/brucellaceae/Brucella_abortus_104M_NZ_CP009625.1_NZ_CP009626.1.fa","r") as myfile :  #load of the fasta file
+	myfile.readline()                                             #we don't keep the header
+	fasta2 = myfile.read().split(">")[0].replace("\n","")
+
+Primer ="Bruce06-1322_134bp_408bp_3u	ATGGGATGTGGTAGGGTAATCG	GCGTGACAATCGACTTTTTGTC"
 
 #dictionnary to create complementary DNA sequences
 dico_comp = {'A':'T','C':'G',"G":"C","T":"A","M":"K","R":"Y","W":"W","S":"S","Y":"R","K":"M","V":"B","H":"D","D":"H","B":"V","X":"X","N":"X",".":".","|":"|"}
@@ -61,7 +65,6 @@ def mix (nb,primer,seq) : #ne marche pas
 def mix (nb,primer,seq) : # return matches (and position) of the primer on the sequence (complementary matches only if none with not inversed primer) 
 	if nb==1 :
 		tmpfind =[]
-		print tmpfind
 		invP=inverComp(primer)                                       #get the complementary inversed primer
 		#tmpfind = regex.findall("("+primer+"){e<=1}",seq,overlapped=True) #allow one mismatch (one more or less nucleotide)
 		searchseq = primer + '|' + '|'.join(primer[:i]+"["+""\
@@ -160,103 +163,100 @@ def findSec(primer,seq,indLeft,sense) : #search a match for the second primer
 				indRight.append(res[0])
 	return indRight
 
-def find(text,primers,round) : #main function : return the result of the matches 
-	errMult=""
-	#var text=trim(GetId('textInput').value)                   # on recupere le fasta
-	#var primers=GetId('primersInput').value.split('\n')       # on recupere les primers 
-	#var primersSNP=GetId('primersInputSNP').value.split('\n') #on recupere les primers SNP
+def find(primers,text,round) : #main function : return the result of the matches 
 	
-	text = text.strip()
+	text = text.replace(" ","").replace("\t","")
+	primers = primers.split("\n")
 	
-	round=round.replace(',','.')
-	round=float(round)    # parsefloat : transforme un string en float
+	if type(round) is str :
+		round = round.replace(",",".") 
+		round = float(round)    # parsefloat : transforme un string en float
 	
 	#primers=primers.filter(function(e){return e}) #??
 	#primersSNP=primersSNP.filter(function(e){return e}) #??
 	#var sizeSNP=parseInt(GetId('sizeSnp').value)
 	
-	files = text.split('>')              #split par > pour séparer les fasta
-	tabRes = []
-	for file in files :                  # pour chaque fasta 
-		text=">"+file
-		tmpSeq=text.split('\n') 
-		titleSeq=tmpSeq[0]
-		titleSeq2=tmpSeq[0]
-		del tmpSeq[0]
+	files = text.split('>')  #split par > pour séparer les fasta
+	del files[0]             # delete the '' created 
+	tabRes = {}
 
-		text=''.join(tmpSeq).upper()
+	for f in xrange(len(files)) :                  # for each fasta sequence 
+		text=">"+files[f]                      
+		tmpSeq=text.split('\n')                
+		titleSeq=tmpSeq[0]                     #get the name of the fasta file
+		#titleSeq2=tmpSeq[0]
+		del tmpSeq[0]		               #del the header of the fasta file to keep only the sequence
+		text=''.join(tmpSeq).upper()           #merge the sequence list iinto a single string
+
 		if primers :                 # si les primers on été rentré
-			for primer in primers :
-				primer = primer.replace(" ",";").replace("\t",";").split(";")
+			for i in xrange(len(primers)) :
+				primer = primers[i].replace(" ",";").replace("\t",";").split(";")
 				detPrimer = primer[0].split('_')
-				
-				tabIndLeft = findFirst(primer[1],text,primer[0]) #recherche de match avec findFirst primer[1]=primer, text=fasta, primer[0]= nom primer
+				#print primer[1]
+				#print text[:100]
+				tabIndLeft = findFirst(primer[1],text) #search match with findFirst() : primer[1]=primer, text=fasta, primer[0]= primer name
 				tabIndRight = []
+				#print tabIndLeft
 				
 				resul = []
-				for (var ind=0;ind<tabIndLeft[0].length;ind++) : 
-					tabIndRight.push(findSec(primer[2],text,primer[0],tabIndLeft[0][ind],tabIndLeft[1][ind])) 
-					if (tabIndRight!=""&&tabIndRight.length>0) :  # si resultat avec le deuxieme primer
-						for (var ind2=0;ind2<tabIndRight[0].length;ind2++){
-							// ## calcule de la sortie xxxbp - xxx recurence - xU
-							if (tabIndLeft[1][ind]=="inv"){
-								var size=Math.abs(tabIndLeft[0][ind]-tabIndRight[ind][ind2]+primer[1].length)
-								var sizeU=Math.abs(detPrimer[3].toUpperCase().replace('U','')-((detPrimer[2].toLowerCase().replace('bp','')-size)/detPrimer[1].toLowerCase().replace('bp','')))
-							}
-							else{
-								var size=Math.abs(tabIndRight[ind][ind2]-tabIndLeft[0][ind]+primer[2].length)
-								var sizeU=Math.abs(detPrimer[3].toUpperCase().replace('U','')-((detPrimer[2].toLowerCase().replace('bp','')-size)/detPrimer[1].toLowerCase().replace('bp','')))
-							}
-							if (GetId('focusFull').checked)
-								resul.push([detPrimer[0],tabIndLeft[0][ind],tabIndRight[ind][ind2],size,sizeU])
-							else
-								resul.push([primer[0],tabIndLeft[0][ind],tabIndRight[ind][ind2],size,sizeU])
-						}
-					}
-				}
-				
-				if (resul.length==0&&!(detPrimer[0] in tabRes)) :
-					if (GetId('focusFull').checked) :
-						tabRes[detPrimer[0]]=[detPrimer[0],"","","",""];
-					else
-						tabRes[primer[0]]=[detPrimer[0],"","","",""];
-				}
-				#calcule de la valeur U (de son arrondi)
-				if (resul.length>0) :
-					var ind=0
-					for (var j=1;j<resul.length;j++) :
-						if (resul[ind][4]>resul[j][4])ind=j :
-					}
+				a = tabIndLeft
+				for ind in xrange(len(tabIndLeft[0])) : #parse both lists of positions and sense of matches (primer1)
+					tabIndRight.append(findSec(primer[2],text,tabIndLeft[0][ind],tabIndLeft[1][ind]))
+					#print tabIndRight
 					
-					if (!isNaN(round)&&round>0){
-						sizeU=resul[ind][4] :
-						if (sizeU>=Math.floor(sizeU)&&sizeU<(Math.floor(sizeU)+round)) #math.floor : plus grand nombre entier inferieur
-							sizeU=Math.floor(sizeU)
-						else if(sizeU<=Math.ceil(sizeU)&&sizeU>(Math.ceil(sizeU)-round)) #math.ceil : arrondi a l'entier supperieur
-							sizeU=Math.ceil(sizeU)
-						else
-							sizeU=Math.floor(sizeU)+0.5
-						resul[ind][4]=sizeU
-					}
-					tabRes[detPrimer[0]]=resul[ind]
-					delete primers[i]
-				}
-			}
-		}
+					if tabIndRight != [] :
+						for ind2 in xrange(len(tabIndRight[0])) : #parse both lists of positions and sense of matches (primer2)
+							if tabIndLeft[1][ind]=="inv" :
+								size = abs(tabIndLeft[0][ind]-tabIndRight[ind][ind2]+len(primer[1]))
 
+							else :
+								size = abs(int(tabIndRight[ind][ind2])-int(tabIndLeft[0][ind]+len(primer[2])))
+							sizeU = abs(int(detPrimer[3].upper().replace("U",""))-((int(detPrimer[2].lower().replace("bp",""))-size)/int(detPrimer[1].lower().replace("bp",""))))
+							resul.append([primer[0],tabIndLeft[0][ind],tabIndRight[ind][ind2],size,sizeU])
+							#print resul
+				#print detPrimer[0]
+
+				if len(resul) == 0 and detPrimer[0] not in tabRes :
+					tabRes[primer[0]]=[detPrimer[0],"","","",""]
+				#print tabRes
+
+				if (len(resul)>0) :
+					ind=0
+					for j in xrange(len(resul)) :
+						if (resul[ind][4]>resul[j][4]) : ind=j
+
+					if round !="" and round>0 :
+						sizeU=resul[ind][4]
+						#print sizeU
+						if sizeU>=math.floor(sizeU) and sizeU<(math.floor(sizeU)+round) :
+							sizeU = math.floor(sizeU)
+						elif sizeU <= math.ceil(sizeU) and sizeU>(math.ceil(sizeU)-round) :
+							sizeU=math.ceil(sizeU)
+						else :
+							sizeU=math.floor(sizeU)+0.5
+
+						resul[ind][4]=sizeU
+						#print resul
+					tabRes[detPrimer[0]]=resul[ind]
+					#print tabRes 
+					#print primers[i]
+					del primers[i]
+	return tabRes
 
 
 #print inverComp("TATAGAGACACA")
 
 #print mix(1,"TGT","ACTGACGACCAYACAAGTTAC")
 
-#print findFirst ("GAC","ACTGACGACCAYACAAGTTAC")
+#print findFirst ("ATGGGATGTGGTAGGGTAATCG",fasta2) # -> ([2122861, 2122881, 2122892, 2122904], ['norm', 'norm', 'norm', 'norm'])
 
-#print findSec ("GAC","ACTGACGACCAYACAAGTTAC",0,"norm")
+#print findSec ("GAC","ACTGACGACCAYACAAGTTAC",0,"norm") 
 #print mix(2,"GAC","ACTGACGACCAACAAGTTAC")
 
 
-
+print find(Primer,fasta,0.25)
+#print findFirst ("ATGGGATGTGGTAGGGTAATCG",fasta2) # -> ([2122861, 2122881, 2122892, 2122904], ['norm', 'norm', 'norm', 'norm'])
+#print findSec ("GCGTGACAATCGACTTTTTGTC",fasta2,684708,"norm") 
 
 
 
