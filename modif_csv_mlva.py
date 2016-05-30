@@ -29,6 +29,7 @@ for row in cr :
 	output.write(";".join([key,row[1].split(" ")[0],source,";".join(row[2:])] )+"\n")
 output.close()
 
+
 ######## ajout de la colonne key en premiere position #############
 
 if len(sys.argv) != 1 :
@@ -41,13 +42,13 @@ if os.path.exists(path+"/corrected") is False :
 	os.mkdir(path+"/corrected")
 
 for file in files :
-
-	if os.path.isfile(path+"/"+file) and file not in ["Supplementary_table_pyogenes.csv","Propionibacterium_access_number.csv","Propionibacterium_acnes_complement.csv"] :
+	exceptions = ["Supplementary_table_pyogenes.csv","Propionibacterium_access_number.csv","Propionibacterium_acnes_complement.csv"]
+	if os.path.isfile(path+"/"+file) and file not in exceptions :
 		print file
 		input = open(path+"/"+file,"r")
 		output = open(path+"/corrected/"+file,"w")
-		tmp = input.readline()
-		output.write("key;collection;"+";".join(tmp.split(";")[1:]))
+		header = input.readline()
+		output.write("key;study;"+";".join(header.split(";")[1:]))
 		output = open(path+"/corrected/"+file,"a")
 
 		for i,line in enumerate(input) :
@@ -55,6 +56,34 @@ for file in files :
 				output.write(str(i+1).zfill(3)+";"+line)
 		input.close()
 		output.close()
+
+######## suppression de la colonne baseView #######################
+
+path = "/home/david/Documents/csv_mlva/corrected"
+files = os.listdir(path)
+
+
+for file in files :
+	input = open(path+"/"+file,"r")
+	tmp = []
+	cr = csv.reader(input,delimiter=";")
+	header = cr.next()
+	header_low = [e.lower() for e in header]
+	position = -1
+	if "baseview" in header_low :
+		position = header_low.index("baseview")
+		del header[position]
+	tmp = ";".join(header) + "\n"
+	for row in cr :
+		if position != -1 :
+			del row[position]
+		tmp += ";".join(row) + "\n"
+
+	with open(path+"/"+file,"w") as f :
+		f.write(tmp)
+
+
+
 
 ################# ajout hypertext pour les contacts et publis ###############
 
@@ -227,3 +256,58 @@ for line in cr3 :
 	line = [str(nbline).zfill(3)]+["Hauck2015_"+str(line[2][len(line[2])-2:]).zfill(3)]+[line[2]]+[" "]+["Hauck2015(http://www.ncbi.nlm.nih.gov/pubmed/25965840)","Christine Pourcel(christine.pourcel@i2bc.paris-saclay.fr)"]+line[3:7]+[";;;;"]+line[7:]
 	f.write(";".join(line)+"\n")
 f.close()
+
+################# Chlamydia_psittaci.csv ###################
+
+file = open("/home/david/Documents/csv_mlva/corrected/Chlamydophila_psittacii.csv","r")
+cr = csv.reader(file,delimiter=";")
+header = cr.next()
+position = header.index("MLVA8") #get the position of the MLVA8 column 
+
+mlva = [int(row[position]) for row in cr if 'temp' not in row[position] and row[position] != '' ] #get all the genome number of the MLVA8 column
+next_gn = max(mlva) +1             
+del mlva
+
+file.seek(0) #return to the beginning of file (after the header)
+cr.next()
+ 
+tmp = ";".join(header) + "\n"
+for row in cr :
+	if 'temp' in row[position] :
+		row[position] = str(next_gn)
+		next_gn += 1
+	if row[8] == "" :
+		row[7] = row[1].split(".")[0]+"(http://www.ncbi.nlm.nih.gov/nuccore/"+row[1].split(".")[0]+")"
+		row[1] = "in silico"
+		row[6] = "David Christiany(David.christiany@i2bc.paris-saclay.fr)"
+	
+	tmp += ";".join(row) +"\n"
+
+output = open("/home/david/Documents/csv_mlva/corrected/Chlamydophila_psittacii.csv","w")
+output.write(tmp)
+output.close()
+
+
+#################### Coxiella burnetii ###########################
+
+file = open("/home/david/Documents/csv_mlva/corrected/Coxiella_burnetii.csv","r")
+cr = csv.reader(file,delimiter=";")
+tmp = ";".join(cr.next()) +"\n"
+
+for row in cr :
+	if row[1][0:2] in ["NC","HG"] :
+		row[7] = row[1].split(".")[0]+"(http://www.ncbi.nlm.nih.gov/nuccore/"+row[1].split(".")[0]+")"
+		row[1] = "in silico"
+		row[8] = "David Christiany(David.christiany@i2bc.paris-saclay.fr)"
+	tmp += ";".join(row) + "\n"
+
+with open("/home/david/Documents/csv_mlva/corrected/Coxiella_burnetii.csv","w") as output :
+	output.write(tmp)
+
+
+
+
+
+
+
+
