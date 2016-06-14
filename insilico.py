@@ -1,20 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import re, math
+import re, math, sys, os.path
 
-#fasta test (brucellaceae)
-with open("/home/david/Documents/complete_genomes/brucellaceae/Brucella_abortus_104M_NZ_CP009625.1_NZ_CP009626.1.fa","r") as myfile :  #load of the fasta file
-	fasta = myfile.read()
+#fasta = "/home/david/Documents/complete_genomes/brucellaceae"
+#primers = "/home/david/downloads/primers_brucella"
 
-with open("/home/david/Documents/complete_genomes/brucellaceae/Brucella_abortus_104M_NZ_CP009625.1_NZ_CP009626.1.fa","r") as myfile :  #load of the fasta file
-	myfile.readline()		#we don't keep the header
-	tmp = myfile.read().split(">")
-	fasta1 = tmp[0].replace("\n","") 
-	fasta2 = "".join(tmp[1].split("\n")[1:]).replace("\n","")
-	 
+if len(sys.argv)>1 :
+	fasta_path = sys.argv[1]
+else :
+	fasta_path = input("Enter a fasta files directory : ")
+files = os.listdir(fasta_path)
 
-with open("/home/david/downloads/primers_brucella","r") as Primers :
-	Primers = Primers.read()
+if len(sys.argv)>2 :
+	primers_path = sys.argv[2]
+else :
+	primers_path = input("Enter a primers file : ")
+Primers = open(primers_path,"r").read()
 
 #dictionnary to create complementary DNA sequences
 dico_comp = {'A':'T','C':'G',"G":"C","T":"A","M":"K","R":"Y","W":"W","S":"S","Y":"R","K":"M","V":"B","H":"D","D":"H","B":"V","X":"X","N":"X",".":".","|":"|"}
@@ -67,6 +68,44 @@ def mix (nb,primer,seq) : #function to find match(s) with a mismatch
 					listFind.append(tmp[0])	
 	return(listFind)
 
+def positionsOfMatches (result,seq,nbmismatch) : #get the matches positions in the fasta sequence
+	pos = []  
+	for res in result :
+		pos.append([seq.find(res),res,nbmismatch])
+	return (pos)
+
+def search_matches(nbmismatch,primer, seq) : #return all match(es) in the fasta sequence 
+	return (regex.findall("("+primer+"){e<="+str(nbmismatch)+"}",seq,overlapped=True))
+
+def mix2 (nb,primer,seq) : #find matches with 0,1 or 2 mismatch for primer in forward and reverse sense
+	listFind =[]
+	if nb==1 :
+		for nb_mismatch in xrange(3) :
+			tmpfind_forward = search_matches(nb_mismatch,primer,seq) 		#get all matches
+			positions_f = positionsOfMatches(tmpfind_forward,seq,nb_mismatch)	#get positions of matches
+			if tmpfind_forward == [] :
+				invP=inverComp(primer)
+				tmpfind_reverse = search_matches(nb_mismatch,invP,seq)
+				positions_r = positionsOfMatches(tmpfind_reverse,seq,nb_mismatch)
+				if tmpfind_reverse != [] :
+					for res in positions_r :
+						listFind.append([res[0],"inv"])
+					break
+			else :
+				for res in positions_f :
+					listFind.append([res[0],"norm"])
+				break
+			
+	elif nb==2 :
+		for nb_mismatch in xrange(3) :
+			tmpfind_forward = search_matches(nb_mismatch,primer,seq) 		#get all matches
+			positions_f = positionsOfMatches(tmpfind_forward,seq,nb_mismatch)	#get positions of matches
+			if tmpfind_forward != [] :
+				for res in positions_f :
+					listFind.append([res[0],"norm"])
+				break
+	return(listFind)
+
 def findFirst (primer,seq) :                         #first search of the primer on the sequence (use inverComp() and mix())
 	indLeft = []
 	sense = []                                   #to store the sense of search (normal or inversed) 
@@ -113,7 +152,7 @@ def findSec(primer,seq,indLeft,sense) : #search a match for the second primer
 		if len(indRight) ==0 :	                       #if no match found : try with one mismatch
 			lastTest=mix(2,primer,seq)             #mix with arg 2 : search only with the given primer, not the complementary
 			if lastTest != [] :
-				indRight.append(lastTest[0])   #indRight get the position of the first match found by mix()
+				indRight.append(lastTest[0][0])   #indRight get the position of the first match found by mix()
 	else :						       #if sense=="inv" 
 		indlook=0
 		resul=seq.find(primer,indlook)
@@ -131,10 +170,10 @@ def findSec(primer,seq,indLeft,sense) : #search a match for the second primer
 
 def find(primers,text,round) : #main function : return the result of the matches 
 	
-	text = text.replace(" ","").replace("\t","")          #delete spaces and tabulations
-	primers = primers.split("\n") 
-	if primers[-1] =="" :
-		del primers[-1]               
+	text = text.replace(" ","").replace("\t","")   #delete spaces and tabulations
+	#primers = primers.split("\n") 
+	#if primers[-1] =="" :
+	#	del primers[-1]               
 
 	if type(round) is str :
 		round = round.replace(",",".") 
@@ -142,7 +181,7 @@ def find(primers,text,round) : #main function : return the result of the matches
 	
 	files = text.split('>')                        #split the fasta files into a list of fasta file
 	del files[0]                                   #delete the '' created
-	tabRes = {}
+	dico_Res = {}
 
 	for f in xrange(len(files)) :                  #for each fasta sequence 
 		text=">"+files[f]                      
@@ -153,7 +192,7 @@ def find(primers,text,round) : #main function : return the result of the matches
 
 		if primers :                           #if primers had been entered
 			for i in range(len(primers)) :
-				print primers[i]
+				#print primers[i]
 				primer = primers[i].replace(" ",";").replace("\t",";").split(";")        #split the primers name, and primers into a list
 				detPrimer = primer[0].split('_')                                         #split differents elements of the name into a list
 				tabIndLeft = findFirst(primer[1],text)                                   #search match with findFirst() : primer[1]=primer, text=fasta
@@ -164,7 +203,7 @@ def find(primers,text,round) : #main function : return the result of the matches
 					if tabIndRight != [] :
 						for ind2 in range(len(tabIndRight[0])) :                                  
 							if tabIndLeft[1][ind]=="inv" :                                      #if the first match is made with the reversed complementary first primer
-								size = abs(tabIndLeft[0][ind]-tabIndRight[ind][ind2]+len(primer[1])) 
+								size = abs(int(tabIndLeft[0][ind])-int(tabIndRight[ind][ind2])+len(primer[1])) 
 							else :
 								size = abs(int(tabIndRight[ind][ind2])-int(tabIndLeft[0][ind])+len(primer[2])) 
 							sizeU = abs(float(detPrimer[3].upper().replace("U",""))-\
@@ -172,8 +211,8 @@ def find(primers,text,round) : #main function : return the result of the matches
 								/float(detPrimer[1].lower().replace("bp",""))))                            #computation of the sizeU value
 							resul.append([primer[0],tabIndLeft[0][ind],tabIndRight[ind][ind2],size,sizeU])   
 
-				if len(resul) == 0 and detPrimer[0] not in tabRes :    #if no result
-					tabRes[detPrimer[0]]=[primer[0],"","","",""]   
+				if len(resul) == 0 and detPrimer[0] not in dico_Res :    #if no result
+					dico_Res[detPrimer[0]]=[primer[0],"","","",""]   
 
 				if (len(resul)>0) :                                    #if result(s)
 					ind=0
@@ -189,21 +228,39 @@ def find(primers,text,round) : #main function : return the result of the matches
 						else :
 							sizeU=math.floor(sizeU)+0.5
 						resul[ind][4]=sizeU                    #set of the rounded sizeU value
-					tabRes[detPrimer[0]]=resul[ind]                #set the best result as a new key : value in the dictionnary #replace the old dictionnary value if there is one
-	return tabRes
-
-result = find(Primers,fasta,0.25)
+					dico_Res[detPrimer[0]]=resul[ind]                #set the best result as a new key : value in the dictionnary #replace the old dictionnary value if there is one
+	return dico_Res
 
 Primers = Primers.split("\n")
-Primers = [ pri.split("_")[0] for pri in Primers ]
-del Primers[-1]
+if Primers[-1]=="" :
+	del Primers[-1]
+Primers_short = [ pri.split("_")[0] for pri in Primers ]
 
-for Primer in Primers :
-	print Primer,result[Primer]
+def main() :
+	for i,file in enumerate(files) :
+		print file
+		pathfile = fasta_path+"/"+file
+		fasta = open(pathfile,"r").read()
+		fasta_names = []
+		for line in fasta.split("\n") :
+			if ">" in line :
+				fasta_names.append(line.replace("\n","").split("|")) 
 
-res="\n"
-for Primer in Primers :
-	res+= "\t".join([Primer,str(result[Primer][4])])+"\n"
+		result = find(Primers,fasta,0.25) 
+					
+		locus=[]
+		mlva_score=[]
+		for Primer in Primers_short :
+			locus.append(Primer.split("_")[0])
+			mlva_score.append(str(result[Primer][4]))
+		if i==0 : 
+			pathfile = "/home/david/Documents/mlva_results/MLVA_analysis_"+fasta_path.split("/")[-1]+".csv"	
+			output = open(pathfile,"w") 
+			output.write(";".join(["fasta_chr1","fasta_chr2","gi_chr1","gi_chr2","ref_chr1","ref_chr2"]+locus)+"\n")  #header
+			output = open(pathfile,"a")
+		output.write(";".join([fasta_names[0][4][1:],fasta_names[1][4][1:],fasta_names[0][1],fasta_names[1][1],fasta_names[0][3],fasta_names[1][3]]+mlva_score)+"\n")
+	output.close()
+	print "MLVA analysis finished for "+fasta_path.split("/")[-1]
 
-print res
+main()
 

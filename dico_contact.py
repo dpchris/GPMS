@@ -23,7 +23,8 @@ for row in cr :
 	dico_contact[key_contact] = key_contact+"("+contact.replace("mailto:","")+")"
 	dico_publi[key_publi] = key_publi+"("+publi+")"
 	
-	print dico_contact[key_contact]
+del dico_contact[""]
+del dico_publi[""]
 
 filehandler = open("dico_publi","wb")
 pickle.dump(dico_publi,filehandler)
