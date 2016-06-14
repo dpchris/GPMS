@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 import re, math, sys, os.path
 
+<<<<<<< HEAD
 #fasta = "/home/david/Documents/complete_genomes/brucellaceae"
+=======
+#fasta = "/home/david/Documents/complete_genomes/brucellaceae/Brucella_abortus_104M_NZ_CP009625.1_NZ_CP009626.1.fa"
+>>>>>>> 7cd71e56e494a9db4aca8054bb49643a93a8e0df
 #primers = "/home/david/downloads/primers_brucella"
 
 if len(sys.argv)>1 :
@@ -228,8 +232,13 @@ def find(primers,text,round) : #main function : return the result of the matches
 						else :
 							sizeU=math.floor(sizeU)+0.5
 						resul[ind][4]=sizeU                    #set of the rounded sizeU value
+<<<<<<< HEAD
 					dico_Res[detPrimer[0]]=resul[ind]                #set the best result as a new key : value in the dictionnary #replace the old dictionnary value if there is one
 	return dico_Res
+=======
+					tabRes[detPrimer[0]]=resul[ind]                #set the best result as a new key : value in the dictionnary #replace the old dictionnary value if there is one
+	return tabRes
+>>>>>>> 7cd71e56e494a9db4aca8054bb49643a93a8e0df
 
 Primers = Primers.split("\n")
 if Primers[-1]=="" :
@@ -258,9 +267,15 @@ def main() :
 			output = open(pathfile,"w") 
 			output.write(";".join(["fasta_chr1","fasta_chr2","gi_chr1","gi_chr2","ref_chr1","ref_chr2"]+locus)+"\n")  #header
 			output = open(pathfile,"a")
+<<<<<<< HEAD
 		output.write(";".join([fasta_names[0][4][1:],fasta_names[1][4][1:],fasta_names[0][1],fasta_names[1][1],fasta_names[0][3],fasta_names[1][3]]+mlva_score)+"\n")
 	output.close()
 	print "MLVA analysis finished for "+fasta_path.split("/")[-1]
+=======
+		output.write(";".join([fasta_names[0][4],fasta_names[1][4],fasta_names[0][1],fasta_names[1][1],fasta_names[0][3],fasta_names[1][3]]+mlva_score)+"\n")
+	output.close()
+	print "MLVA analysis finished for "+fasta_pasth.split("/")[-1]
+>>>>>>> 7cd71e56e494a9db4aca8054bb49643a93a8e0df
 
 main()
 
