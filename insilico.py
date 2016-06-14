@@ -2,11 +2,7 @@
 # -*- coding: utf-8 -*-
 import re, math, sys, os.path
 
-<<<<<<< HEAD
-#fasta = "/home/david/Documents/complete_genomes/brucellaceae"
-=======
 #fasta = "/home/david/Documents/complete_genomes/brucellaceae/Brucella_abortus_104M_NZ_CP009625.1_NZ_CP009626.1.fa"
->>>>>>> 7cd71e56e494a9db4aca8054bb49643a93a8e0df
 #primers = "/home/david/downloads/primers_brucella"
 
 if len(sys.argv)>1 :
@@ -32,7 +28,7 @@ def inverComp (seq) :                              #return the inversed compleme
 	seq_comp = "".join(reversed(seq_comp))     #we reverse the sequence	
 	return (seq_comp)
 
-def mix (nb,primer,seq) : #function to find match(s) with a mismatch
+def mix_old (nb,primer,seq) : #function to find match(s) with a mismatch
 	listFind =[]
 	if nb==1 :
 		invP=inverComp(primer)
@@ -72,6 +68,7 @@ def mix (nb,primer,seq) : #function to find match(s) with a mismatch
 					listFind.append(tmp[0])	
 	return(listFind)
 
+
 def positionsOfMatches (result,seq,nbmismatch) : #get the matches positions in the fasta sequence
 	pos = []  
 	for res in result :
@@ -81,7 +78,7 @@ def positionsOfMatches (result,seq,nbmismatch) : #get the matches positions in t
 def search_matches(nbmismatch,primer, seq) : #return all match(es) in the fasta sequence 
 	return (regex.findall("("+primer+"){e<="+str(nbmismatch)+"}",seq,overlapped=True))
 
-def mix2 (nb,primer,seq) : #find matches with 0,1 or 2 mismatch for primer in forward and reverse sense
+def mix (nb,primer,seq) : #find matches with 0,1 or 2 mismatch for primer in forward and reverse sense
 	listFind =[]
 	if nb==1 :
 		for nb_mismatch in xrange(3) :
@@ -185,7 +182,7 @@ def find(primers,text,round) : #main function : return the result of the matches
 	
 	files = text.split('>')                        #split the fasta files into a list of fasta file
 	del files[0]                                   #delete the '' created
-	dico_Res = {}
+	tabRes = {}
 
 	for f in xrange(len(files)) :                  #for each fasta sequence 
 		text=">"+files[f]                      
@@ -196,7 +193,7 @@ def find(primers,text,round) : #main function : return the result of the matches
 
 		if primers :                           #if primers had been entered
 			for i in range(len(primers)) :
-				#print primers[i]
+				print primers[i]
 				primer = primers[i].replace(" ",";").replace("\t",";").split(";")        #split the primers name, and primers into a list
 				detPrimer = primer[0].split('_')                                         #split differents elements of the name into a list
 				tabIndLeft = findFirst(primer[1],text)                                   #search match with findFirst() : primer[1]=primer, text=fasta
@@ -215,8 +212,8 @@ def find(primers,text,round) : #main function : return the result of the matches
 								/float(detPrimer[1].lower().replace("bp",""))))                            #computation of the sizeU value
 							resul.append([primer[0],tabIndLeft[0][ind],tabIndRight[ind][ind2],size,sizeU])   
 
-				if len(resul) == 0 and detPrimer[0] not in dico_Res :    #if no result
-					dico_Res[detPrimer[0]]=[primer[0],"","","",""]   
+				if len(resul) == 0 and detPrimer[0] not in tabRes :    #if no result
+					tabRes[detPrimer[0]]=[primer[0],"","","",""]   
 
 				if (len(resul)>0) :                                    #if result(s)
 					ind=0
@@ -232,13 +229,8 @@ def find(primers,text,round) : #main function : return the result of the matches
 						else :
 							sizeU=math.floor(sizeU)+0.5
 						resul[ind][4]=sizeU                    #set of the rounded sizeU value
-<<<<<<< HEAD
-					dico_Res[detPrimer[0]]=resul[ind]                #set the best result as a new key : value in the dictionnary #replace the old dictionnary value if there is one
-	return dico_Res
-=======
 					tabRes[detPrimer[0]]=resul[ind]                #set the best result as a new key : value in the dictionnary #replace the old dictionnary value if there is one
 	return tabRes
->>>>>>> 7cd71e56e494a9db4aca8054bb49643a93a8e0df
 
 Primers = Primers.split("\n")
 if Primers[-1]=="" :
@@ -267,15 +259,9 @@ def main() :
 			output = open(pathfile,"w") 
 			output.write(";".join(["fasta_chr1","fasta_chr2","gi_chr1","gi_chr2","ref_chr1","ref_chr2"]+locus)+"\n")  #header
 			output = open(pathfile,"a")
-<<<<<<< HEAD
-		output.write(";".join([fasta_names[0][4][1:],fasta_names[1][4][1:],fasta_names[0][1],fasta_names[1][1],fasta_names[0][3],fasta_names[1][3]]+mlva_score)+"\n")
-	output.close()
-	print "MLVA analysis finished for "+fasta_path.split("/")[-1]
-=======
 		output.write(";".join([fasta_names[0][4],fasta_names[1][4],fasta_names[0][1],fasta_names[1][1],fasta_names[0][3],fasta_names[1][3]]+mlva_score)+"\n")
 	output.close()
 	print "MLVA analysis finished for "+fasta_pasth.split("/")[-1]
->>>>>>> 7cd71e56e494a9db4aca8054bb49643a93a8e0df
 
 main()
 
