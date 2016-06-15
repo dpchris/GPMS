@@ -63,18 +63,19 @@ def mix (nb,primer,seq) : #function to find match(s) with a mismatch
 				if tmp != [] :
 					listFind.append(tmp[0])	
 			#if no match with one mismatch
-			if listFind == [] :
-				tmpfind_forward = search_matches(2,primer,seq) 		#get all matches (two mismatches)
-				positions_f = positionsOfMatches(tmpfind_forward,seq)	#get positions of matches
-				if tmpfind_forward == [] :
-					tmpfind_reverse = search_matches(2,invP,seq)
-					positions_r = positionsOfMatches(tmpfind_reverse,seq)
-					if tmpfind_reverse != [] :
-						for res in positions_r :
-							listFind.append([res[0],"inv"])
-				else :
-					for res in positions_f :
-						listFind.append([res[0],"norm"])
+		if listFind == [] :
+			print "two matches ..."
+			tmpfind_forward = search_matches(2,primer,seq) 		#get all matches (two mismatches)
+			positions_f = positionsOfMatches(tmpfind_forward,seq)	#get positions of matches
+			if tmpfind_forward == [] :
+				tmpfind_reverse = search_matches(2,invP,seq)
+				positions_r = positionsOfMatches(tmpfind_reverse,seq)
+				if tmpfind_reverse != [] :
+					for res in positions_r :
+						listFind.append([res[0],"inv"])
+			else :
+				for res in positions_f :
+					listFind.append([res[0],"norm"])
 		
 		
 	elif nb==2 :					       #search only in the forward sense
@@ -90,13 +91,13 @@ def mix (nb,primer,seq) : #function to find match(s) with a mismatch
 					tmp.append([m.start(),"norm"])
 				if tmp != [] :
 					listFind.append(tmp[0])	
-			#if no match with one mismatch
-			if listFind == [] :
-				tmpfind_forward = search_matches(2,primer,seq) 	#get all matches
-				positions_f = positionsOfMatches(tmpfind_forward,seq)		#get positions of matches
-				if tmpfind_forward != [] :
-					for res in positions_f :
-						listFind.append([res[0],"norm"])
+		#if no match with one mismatch
+		if listFind == [] :
+			tmpfind_forward = search_matches(2,primer,seq) 	#get all matches
+			positions_f = positionsOfMatches(tmpfind_forward,seq)		#get positions of matches
+			if tmpfind_forward != [] :
+				for res in positions_f :
+					listFind.append([res[0],"norm"])
 	return(listFind)
 
 def findFirst (primer,seq) :                         #first search of the primer on the sequence (use inverComp() and mix())
@@ -201,7 +202,8 @@ def find(primers,text,round) : #main function : return the result of the matches
 							sizeU = abs(float(detPrimer[3].upper().replace("U",""))-\
 								((float(detPrimer[2].lower().replace("bp",""))-size)\
 								/float(detPrimer[1].lower().replace("bp",""))))                            #computation of the sizeU value
-							resul.append([primer[0],tabIndLeft[0][ind],tabIndRight[ind][ind2],size,sizeU])   
+							resul.append([primer[0],tabIndLeft[0][ind],tabIndRight[ind][ind2],size,sizeU])  
+				print resul 
 
 				if len(resul) == 0 and detPrimer[0] not in tabRes :    #if no result
 					tabRes[detPrimer[0]]=[primer[0],"","","",""]   

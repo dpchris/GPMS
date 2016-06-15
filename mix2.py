@@ -47,19 +47,19 @@ def mix (nb,primer,seq) : #function to find match(s) with a mismatch
 					tmp.append([m.start(),"inv"])
 				if tmp != [] :
 					listFind.append(tmp[0])	
-			#if no match with one mismatch, use of regex.findall for two mismatch
-			if listFind == [] :
-				tmpfind_forward = search_matches(2,primer,seq) 		#get all matches (two mismatches)
-				positions_f = positionsOfMatches(tmpfind_forward,seq)	#get positions of matches
-				if tmpfind_forward == [] :
-					tmpfind_reverse = search_matches(2,invP,seq)
-					positions_r = positionsOfMatches(tmpfind_reverse,seq)
-					if tmpfind_reverse != [] :
-						for res in positions_r :
-							listFind.append([res[0],"inv"])
-				else :
-					for res in positions_f :
-						listFind.append([res[0],"norm"])
+		#if no match with one mismatch, use of regex.findall for two mismatch
+		if listFind == [] :
+			tmpfind_forward = search_matches(2,primer,seq) 		#get all matches (two mismatches)
+			positions_f = positionsOfMatches(tmpfind_forward,seq)	#get positions of matches
+			if tmpfind_forward == [] :
+				tmpfind_reverse = search_matches(2,invP,seq)
+				positions_r = positionsOfMatches(tmpfind_reverse,seq)
+				if tmpfind_reverse != [] :
+					for res in positions_r :
+						listFind.append([res[0],"inv"])
+			else :
+				for res in positions_f :
+					listFind.append([res[0],"norm"])
 		
 		
 	elif nb==2 :					       #search only in the forward sense
@@ -75,13 +75,13 @@ def mix (nb,primer,seq) : #function to find match(s) with a mismatch
 					tmp.append([m.start(),"norm"])
 				if tmp != [] :
 					listFind.append(tmp[0])	
-			#if no match with one mismatch
-			if listFind == [] :
-				tmpfind_forward = search_matches(2,primer,seq) 	#get all matches
-				positions_f = positionsOfMatches(tmpfind_forward,seq)		#get positions of matches
-				if tmpfind_forward != [] :
-					for res in positions_f :
-						listFind.append([res[0],"norm"])
+		#if no match with one mismatch
+		if listFind == [] :
+			tmpfind_forward = search_matches(2,primer,seq) 	#get all matches
+			positions_f = positionsOfMatches(tmpfind_forward,seq)		#get positions of matches
+			if tmpfind_forward != [] :
+				for res in positions_f :
+					listFind.append([res[0],"norm"])
 	return(listFind)
 
 #Brucella_suis_NZ_CP009096.1_NZ_CP009097.1.fa
