@@ -12,7 +12,7 @@ dico_contact["Christine Pourcel"] ="Christine Pourcel(christine.pourcel@u-psud.f
 dico_contact["Lenie Dijkshoorn"] ="Lenie Dijkshoorn(l.dijkshoorn@lumc.nl)"
 dico_contact["Kirnpal Kaur Banga Singh"] ="Kirnpal Kaur Banga Singh(kiren@kck.usm.my)"
 
-cr = csv.reader(open("/home/david/Documents/contact.csv","r"),delimiter=";")
+cr = csv.reader(open("/home/david/Documents/MLVA/contact.csv","r"),delimiter=";")
 
 for row in cr :
 	key_publi = row[0]
@@ -26,11 +26,11 @@ for row in cr :
 del dico_contact[""]
 del dico_publi[""]
 
-filehandler = open("dico_publi","wb")
+filehandler = open("/home/david/Documents/MLVA/dico_publi","wb")
 pickle.dump(dico_publi,filehandler)
 filehandler.close
 
-filehandler = open("dico_contact","wb")
+filehandler = open("/home/david/Documents/MLVA/dico_contact","wb")
 pickle.dump(dico_contact,filehandler)
 filehandler.close
 

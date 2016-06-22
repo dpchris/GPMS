@@ -6,15 +6,15 @@ import csv,sys,os.path,pickle
 ## mise en forme du csv pyogenes a partir du csv extrait du suplementary data de Roberta Creti
 ## silico## pour les souches silico qui n'ont pas de numero
 
-cr = csv.reader(open("/home/david/Documents/csv_mlva/Supplementary_table_pyogenes.csv","r"),delimiter=";")
+cr = csv.reader(open("/home/david/Documents/MLVA/csv_mlva/Supplementary_table_pyogenes.csv","r"),delimiter=";")
 
 tmp = cr.next()
 header = ["study","Strain ID","source"]
 header.extend([";".join(tmp[2:8])+";contact;"+";".join(tmp[8:])])
 
-output = open("/home/david/Documents/csv_mlva/Supplementary_table_pyogenes_corrected.csv","w")
+output = open("/home/david/Documents/MLVA/csv_mlva/Supplementary_table_pyogenes_corrected.csv","w")
 output.write(";".join(header)+"\n")
-output = open("/home/david/Documents/csv_mlva/Supplementary_table_pyogenes_corrected.csv","a")
+output = open("/home/david/Documents/MLVA/csv_mlva/Supplementary_table_pyogenes_corrected.csv","a")
 
 i=1
 for row in cr :
@@ -37,7 +37,7 @@ output.close()
 if len(sys.argv) != 1 :
 	path = sys.argv[1]
 else :
-	path = "/home/david/Documents/csv_mlva"
+	path = "/home/david/Documents/MLVA/csv_mlva"
 
 files = os.listdir(path)
 if os.path.exists(path+"/corrected") is False :
@@ -61,7 +61,7 @@ for file in files :
 
 ######## suppression de la colonne baseView #######################
 
-path = "/home/david/Documents/csv_mlva/corrected"
+path = "/home/david/Documents/MLVA/csv_mlva/corrected"
 files = os.listdir(path)
 
 
@@ -88,7 +88,7 @@ for file in files :
 
 ## compacte le nom de genus avec le nom de species en X. xxxxxx 
 
-path = "/home/david/Documents/csv_mlva/corrected/Acinetobacter.csv"
+path = "/home/david/Documents/MLVA/csv_mlva/corrected/Acinetobacter.csv"
 
 cr = csv.reader(open(path,"r"),delimiter=";")
 tmp = cr.next()
@@ -118,7 +118,7 @@ with open(path,"w") as f :
 
 ########## traitement du fichier Streptococcus pneumoniae.csv ###########
 
-cr = csv.reader(open("/home/david/Documents/csv_mlva/corrected/Streptococcus_pneumoniae.csv","r"),delimiter=";")
+cr = csv.reader(open("/home/david/Documents/MLVA/csv_mlva/corrected/Streptococcus_pneumoniae.csv","r"),delimiter=";")
 header = cr.next()
 header = ";".join(header[:8])+";publication;contact;"+";".join(header[8:])
 tmp = header +"\n"
@@ -144,13 +144,13 @@ for row in cr :
 		row = row[:8]+["Koeck2005;Christine Pourcel"]+row[8:]		
 	tmp += ";".join(row)+"\n"
 
-with open("/home/david/Documents/csv_mlva/corrected/Streptococcus_pneumoniae.csv","w") as f :
+with open("/home/david/Documents/MLVA/csv_mlva/corrected/Streptococcus_pneumoniae.csv","w") as f :
 	f.write(tmp)
 	f.close()
 
 ############# Mycobacterium tuberculosis #################
 
-cr = csv.reader(open("/home/david/Documents/csv_mlva/corrected/Mycobacterium_tuberculosis.csv","r"),delimiter=";")
+cr = csv.reader(open("/home/david/Documents/MLVA/csv_mlva/corrected/Mycobacterium_tuberculosis.csv","r"),delimiter=";")
 tmp = cr.next()
 del tmp[2]
 del tmp[11:18]
@@ -181,13 +181,13 @@ for row in cr :
 
 	tmp+= ";".join(row)+"\n"
 
-output = open("/home/david/Documents/csv_mlva/corrected/Mycobacterium_tuberculosis.csv","w")
+output = open("/home/david/Documents/MLVA/csv_mlva/corrected/Mycobacterium_tuberculosis.csv","w")
 output.write(tmp)
 output.close()
 
 ############# Pseudomonas_syringae_pv_actinidiae #################
 
-cr = csv.reader(open("/home/david/Documents/csv_mlva/corrected/Pseudomonas_syringae_pv_actinidiae.csv","r"),delimiter=";")
+cr = csv.reader(open("/home/david/Documents/MLVA/csv_mlva/corrected/Pseudomonas_syringae_pv_actinidiae.csv","r"),delimiter=";")
 header = cr.next()
 tmp = ";".join(header[0:2])+";Strain_ID;"+";".join(header[2:4])+";publication;contact;isolated_in;"+";".join(header[7:])+"\n"
 
@@ -218,7 +218,7 @@ for row in cr :
 	row = row[0:2]+[tmp2]+row[2:]
 	tmp += ";".join(row)+"\n"
 
-with open("/home/david/Documents/csv_mlva/corrected/Pseudomonas_syringae_pv_actinidiae.csv","w") as f :
+with open("/home/david/Documents/MLVA/csv_mlva/corrected/Pseudomonas_syringae_pv_actinidiae.csv","w") as f :
 	f.write(tmp)
 	f.close()
 	
@@ -226,12 +226,12 @@ with open("/home/david/Documents/csv_mlva/corrected/Pseudomonas_syringae_pv_acti
 
 ################ Propionibacterium ###############
 
-cr = csv.reader(open("/home/david/Documents/csv_mlva/corrected/Propionibacterium_acnes.csv","r"),delimiter=";")
+cr = csv.reader(open("/home/david/Documents/MLVA/csv_mlva/corrected/Propionibacterium_acnes.csv","r"),delimiter=";")
 header = cr.next()
 del header[9]
 tmp = ";".join(header[0:3])+";accession_number;publication;contact;"+header[3]+";site;hospital;year;"+";".join(header[4:6])+";Belfast;"+";".join(header[7:])+"\n"
 
-cr2 = csv.reader(open("/home/david/Documents/csv_mlva/Propionibacterium_access_number.csv","r"),delimiter=";")
+cr2 = csv.reader(open("/home/david/Documents/MLVA/csv_mlva/Propionibacterium_access_number.csv","r"),delimiter=";")
 cr2.next()
 access = []
 for row in cr2 :
@@ -247,14 +247,14 @@ for i,row in enumerate(cr) :
 	tmp+= ";".join(row[0:3]+[access[i].split(".")[0]+"(http://www.ncbi.nlm.nih.gov/nuccore/"+access[i]+")"]+["Hauck2015","Christine Pourcel"]+[row[3]]+["","",""]+row[4:])+"\n"
 	nbline+=1
 
-with open("/home/david/Documents/csv_mlva/corrected/Propionibacterium_acnes.csv","w") as f :
+with open("/home/david/Documents/MLVA/csv_mlva/corrected/Propionibacterium_acnes.csv","w") as f :
 	f.write(tmp)
 	f.close()
 
-cr3 = csv.reader(open("/home/david/Documents/csv_mlva/Propionibacterium_acnes_complement.csv","r"),delimiter=";")
+cr3 = csv.reader(open("/home/david/Documents/MLVA/csv_mlva/Propionibacterium_acnes_complement.csv","r"),delimiter=";")
 cr3.next()
 
-f = open("/home/david/Documents/csv_mlva/corrected/Propionibacterium_acnes.csv","a")
+f = open("/home/david/Documents/MLVA/csv_mlva/corrected/Propionibacterium_acnes.csv","a")
 
 for line in cr3 :
 	nbline+=1
@@ -264,7 +264,7 @@ f.close()
 
 ################# Chlamydia_psittaci.csv ###################
 
-file = open("/home/david/Documents/csv_mlva/corrected/Chlamydophila_psittacii.csv","r")
+file = open("/home/david/Documents/MLVA/csv_mlva/corrected/Chlamydophila_psittacii.csv","r")
 cr = csv.reader(file,delimiter=";")
 header = cr.next()
 position = header.index("MLVA8") #get the position of the MLVA8 column 
@@ -290,14 +290,14 @@ for row in cr :
 	
 	tmp += ";".join(row) +"\n"
 
-output = open("/home/david/Documents/csv_mlva/corrected/Chlamydophila_psittacii.csv","w")
+output = open("/home/david/Documents/MLVA/csv_mlva/corrected/Chlamydophila_psittacii.csv","w")
 output.write(tmp)
 output.close()
 
 
 #################### Coxiella burnetii ###########################
 
-file = open("/home/david/Documents/csv_mlva/corrected/Coxiella_burnetii.csv","r")
+file = open("/home/david/Documents/MLVA/csv_mlva/corrected/Coxiella_burnetii.csv","r")
 cr = csv.reader(file,delimiter=";")
 tmp = ";".join(cr.next()) +"\n"
 
@@ -315,12 +315,12 @@ for row in cr :
 		row[5] = "1935"
 	tmp += ";".join(row) + "\n"
 
-with open("/home/david/Documents/csv_mlva/corrected/Coxiella_burnetii.csv","w") as output :
+with open("/home/david/Documents/MLVA/csv_mlva/corrected/Coxiella_burnetii.csv","w") as output :
 	output.write(tmp)
 
 ################# Pseudomonas aeruginosa ##############################
 
-file = open("/home/david/Documents/csv_mlva/corrected/Pseudomonas_aeruginosa.csv","r")
+file = open("/home/david/Documents/MLVA/csv_mlva/corrected/Pseudomonas_aeruginosa.csv","r")
 cr = csv.reader(file,delimiter=";")
 tmp = ";".join(cr.next()) +"\n"
 i=1
@@ -332,13 +332,13 @@ for row in cr :
 		i+=1
 	tmp += ";".join(row) +"\n"
 
-with open("/home/david/Documents/csv_mlva/corrected/Pseudomonas_aeruginosa.csv","w") as output :
+with open("/home/david/Documents/MLVA/csv_mlva/corrected/Pseudomonas_aeruginosa.csv","w") as output :
 	output.write(tmp)
 
 
 ################## Bacillus anthracis ###############################
 
-file = open("/home/david/Documents/csv_mlva/corrected/Bacillus_anthracis.csv","r")
+file = open("/home/david/Documents/MLVA/csv_mlva/corrected/Bacillus_anthracis.csv","r")
 cr = csv.reader(file,delimiter=";")
 tmp = ";".join(cr.next()) +"\n"
 
@@ -349,17 +349,19 @@ for row in cr : #replace ACGT by 1234
 	for e in row[45:] :
 		if e != "" :
 			SNP.append(dico_trad[e])
+		else :
+			SNP.append("")
 	tmp += ";".join(row[:45])+";"+";".join(SNP)+"\n"
 
-with open("/home/david/Documents/csv_mlva/corrected/Bacillus_anthracis.csv","w") as output :
+with open("/home/david/Documents/MLVA/csv_mlva/corrected/Bacillus_anthracis.csv","w") as output :
 	output.write(tmp)
 
 ################# ajout hypertext pour les contacts et publis ###############
 
-dico_contact = pickle.load(open("/home/david/Documents/scripts/dico_contact","r"))
-dico_publi = pickle.load(open("/home/david/Documents/scripts/dico_publi","r"))
+dico_contact = pickle.load(open("/home/david/Documents/MLVA/dico_contact","r"))
+dico_publi = pickle.load(open("/home/david/Documents/MLVA/dico_publi","r"))
 
-path = "/home/david/Documents/csv_mlva/corrected"
+path = "/home/david/Documents/MLVA/csv_mlva/corrected"
 files = os.listdir(path)
 
 #on ajoute les mails pour les contact
