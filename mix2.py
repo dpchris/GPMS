@@ -86,18 +86,21 @@ def mix (nb,primer,seq) : #function to find match(s) with a mismatch
 
 #Brucella_suis_NZ_CP009096.1_NZ_CP009097.1.fa
 #Brucella_vulpis_NZ_LN997863.1_NZ_LN997864.1.fa
+#Brucella_ovis_ATCC_25840_NC_009505.1_NC_009504.1.fa
+#Bruce19-324_3bp_163bp_36u	GACGACCCGGACCATGTC	ACTTCACCGTAACGTCGTGGA
 #Bruce11-211_63bp_257bp_2u	CTGTTGATCTGACCTTGCAACC	CCAGACAACAACCTACGTCCTG
 #Bruce42-424_125bp_539bp_4u	CATCGCCTCAACTATACCGTCA	ACCGCAAAATTTACGCATCG
 #Bruce22-322_8bp_158bp_6u	GATGAAGACGGCTATCGACTG	TAGGGGAGTATGTTTTGGTTGC
 
-with open("/home/david/Documents/complete_genomes/brucellaceae/Brucella_suis_NZ_CP009096.1_NZ_CP009097.1.fa","r") as myfile :  #load of the fasta file
-	myfile.readline()                                             #we don't keep the header
+with open("/home/david/Documents/complete_genomes/brucellaceae/Brucella_ovis_ATCC_25840_NC_009505.1_NC_009504.1.fa","r") as myfile :  #load of the fasta file
+	raw_fasta=myfile.read()
+	myfile.seek(1)	
 	tmp = myfile.read().split(">")
 	chr1 = tmp[0].replace("\n","")
 	chr2 = tmp[1].replace("\n","")
 	fasta = chr1+chr2
 
-print mix(1,"CCAGACAACAACCTACGTCCTG",fasta)
+print mix(1,"ACTTCACCGTAACGTCGTGGA",chr2)
 #print mix2(1,"CCAGACAACAACCTACGTCCTG",fasta)
 #print search_matches(2,inverComp("ACCGCAAAATTTACGCATCG"),fasta)
 
