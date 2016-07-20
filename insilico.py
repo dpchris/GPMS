@@ -2,82 +2,73 @@
 # -*- coding: utf-8 -*-
 import re, regex, math, sys, os.path
 
-#fasta = "/home/david/Documents/complete_genomes/brucellaceae/Brucella_abortus_104M_NZ_CP009625.1_NZ_CP009626.1.fa"
+#fasta = "/home/david/Documents/complete_genomes/brucellaceae"
 #primers = "/home/david/downloads/primers_brucella"
 
 if len(sys.argv)>1 :
 	fasta_path = sys.argv[1]
 else :
-	fasta_path = input("Enter a fasta files directory : ")
+	#fasta_path = input("Enter a fasta files directory : ")
+	fasta_path = "/home/david/Documents/complete_genomes/brucellaceae"
 files = os.listdir(fasta_path)
 
 if len(sys.argv)>2 :
 	primers_path = sys.argv[2]
 else :
-	primers_path = input("Enter a primers file : ")
+	#primers_path = input("Enter a primers file : ")
+	primers_path = "/home/david/downloads/primers_brucella"
 Primers = open(primers_path,"r").read()
 
 #dictionnary to create complementary DNA sequences
 dico_comp = {'A':'T','C':'G',"G":"C","T":"A","M":"K","R":"Y","W":"W","S":"S","Y":"R","K":"M","V":"B","H":"D","D":"H","B":"V","X":"X","N":"X",".":".","|":"|"}
 
-def inverComp (seq) :                              #return the inversed complementary sequence
-	seq = seq.upper()                          #acgt -> ACGT
+def inverComp (seq) :					#return the inversed complementary sequence
+	seq = seq.upper()                  		#acgt -> ACGT
 	seq_comp = ""
-	for nuc in seq :                           #nuc stand for nucleotide
-		seq_comp += dico_comp[nuc]         #use of the dictionnary to have the complementary nucleotide
-	seq_comp = "".join(reversed(seq_comp))     #we reverse the sequence	
+	for nuc in seq :                   		#nuc stand for nucleotide
+		seq_comp += dico_comp[nuc]  		#use of the dictionnary to have the complementary nucleotide
+	seq_comp = "".join(reversed(seq_comp))		#we reverse the sequence	
 	return (seq_comp)
 
-def positionsOfMatches (result,seq) : #get the matches positions in the fasta sequence
+def positionsOfMatches (result,seq) : 			#get the matches positions in the fasta sequence
 	pos = []  
 	for res in result :
 		pos.append([seq.find(res),res])
 	return (pos)
 
-def search_matches(nbmismatch,primer, seq) : #return all match(es) in the fasta sequence 
-	return (regex.findall("("+primer+"){e<="+str(nbmismatch)+"}",seq,overlapped=False))
+def search_matches(nbmismatch,primer, seq) : 		#return all match(es) in the fasta sequence 
+	return (regex.findall("("+primer+"){e<="+str(nbmismatch)+"}",seq,overlapped=True))
 
-def mix (nb,primer,seq,nb_mismatch) : #function to find match(s) with a mismatch
-	listFind =[]
+def mismatch (nb,primer,seq) : 		#function to find match(s) with a mismatch
+	match = []
+	sense = []
+	tmp_res = set()
 	if nb==1 :
 		invP=inverComp(primer)
-		for i in range(len(primer)): #for each nucleotide of the primer
+		for i in range(len(primer)): 		#for each nucleotide of the primer
 			reg1=primer[:i]
 			reg2=primer[i+1:]
 			reg = str(reg1) + "["+"".join(dico_comp.keys()).replace("|","").replace(".","")+"]" + str(reg2)
-			searchseq = re.compile(reg)            #search request for finditer (Primer with a mismatch)
-			tmpfinditer = searchseq.finditer(seq)  #tmpfinder : objects list with start() end() and group(0) functions
-			tmp=[]
-			for m in tmpfinditer :                 #for each result
-				tmp.append([m.start(),"norm"]) #add the result in the tmp list
-			if tmp != [] :                         #if results, we add the first result in listFind
-				listFind.append(tmp[0])	
-			else :                                 #same search with the complementary reversed primer
+			searchseq = re.compile(reg)           	 	#search request for finditer (Primer with a mismatch)
+			tmpfinditer = searchseq.finditer(seq)  		#tmpfinder : objects list with start() end() and group(0) functions
+			tmp= set()
+			for m in tmpfinditer :                 		#for each result
+				tmp.add("_".join([str(m.start()),"norm"]))	 		#add the result in the tmp list
+			if tmp :                         		#if results, we add the first result in listFind
+				for res in tmp :
+					tmp_res.add(res)	
+			else :                                 		#same search with the complementary reversed primer
 				reg1=invP[:i]
 				reg2=invP[i+1:]
 				reg = str(reg1) + "["+"".join(dico_comp.keys()).replace("|","").replace(".","")+"]" + str(reg2) #search request for one mismatch
 				searchseq = re.compile(reg)
 				tmpfinditer = searchseq.finditer(seq)
 				for m in tmpfinditer :
-					tmp.append([m.start(),"inv"])
-				if tmp != [] :
-					listFind.append(tmp[0])	
-			#if no match with one mismatch
-		if listFind == [] and nb_mismatch == 2 :
-			tmpfind_forward = search_matches(2,primer,seq) 		#get all matches (two mismatches)
-			positions_f = positionsOfMatches(tmpfind_forward,seq)	#get positions of matches
-			if tmpfind_forward == [] :
-				tmpfind_reverse = search_matches(2,invP,seq)	#get the match(es) with two mismatch (use of regex.findall())
-				positions_r = positionsOfMatches(tmpfind_reverse,seq)	#get the position(s) of match(es)
-				if tmpfind_reverse != [] :
-					for res in positions_r :
-						listFind.append([res[0],"inv"])
-			else :
-				for res in positions_f :
-					listFind.append([res[0],"norm"])
-		
-		
-	elif nb==2 :					       #search only in the forward sense
+					tmp.add("_".join([str(m.start()),"inv"]))
+				if tmp :
+					for res in tmp :
+						tmp_res.add(res)
+	elif nb==2 :					      		#search only in the forward sense
 		for i in range(len(primer)):
 			reg1=primer[:i]
 			reg2=primer[i+1:]
@@ -85,158 +76,174 @@ def mix (nb,primer,seq,nb_mismatch) : #function to find match(s) with a mismatch
 			searchseq = re.compile(reg)
 			tmpfinditer = searchseq.finditer(seq) 
 			if tmpfinditer !=[] :
-				tmp=[]
+				tmp= set()
 				for m in tmpfinditer :
-					tmp.append([m.start(),"norm"])
-				if tmp != [] :
-					listFind.append(tmp[0])	
-		#if no match with one mismatch, use of regex.findall for two mismatch
-		if listFind == [] and nb_mismatch == 2 :
-			tmpfind_forward = search_matches(2,primer,seq) 			#get all matches
-			positions_f = positionsOfMatches(tmpfind_forward,seq)		#get positions of matches
-			if tmpfind_forward != [] :
-				for res in positions_f :
-					listFind.append([res[0],"norm"])
-	return(listFind)
+					tmp.add("_".join([str(m.start()),"norm"]))
+				
+				if tmp :
+					for res in tmp :
+						tmp_res.add(res)
+	for e in tmp_res :
+		match.append(int(e.split("_")[0]))
+		sense.append(e.split("_")[1]) 	
 
-def findFirst (primer,seq) :                         #first search of the primer on the sequence (use inverComp() and mix())
-	indLeft = []
-	sense = []                                   #to store the sense of search (normal or inversed) 
-	indlook=0
-	resul=seq.find(primer,indlook)               #get the first match (if it exists)
-	while (resul!=-1) :                          #while the search has not been made on the entire sequence               
-		indLeft.append(resul)             
-		indlook=indLeft[-1]+1                #next search will start one nucleotide after the position of the last match
-		sense.append("norm")
-		resul=seq.find(primer,indlook)       #next search, if no more match : resul = -1 -> end of the loop
-	
-	if len(indLeft)==0 :                         #if no match foud with the regular primer 
-		indlook=0
-		tmpP=inverComp(primer)               #get the inversed complementary primer with inverComp()
-		resul=seq.find(tmpP,indlook)
-		while(resul!=-1):                    #same search with the converted primer
-			indLeft.append(resul)                 
-			indlook=indLeft[-1]+1   
-			sense.append("inv")
-			resul=seq.find(tmpP,indlook) 
-		
-		if (len(indLeft)==0):                    #if still no matches
-			lastTest=mix(1,primer,seq,2)       #search with a mismatch with mix()		
-			if lastTest != [] :
-				for last in lastTest :
-					indLeft.append(last[0])        #get the position of the match
-					sense.append(last[1])          #get the sens of the match
-			
-		
-	
-	return (indLeft,sense)
+	return(match,sense)
 
-def findSec(primer,seq,indLeft,sense) : #search a match for the second primer
-	indRight = []
-	if sense=="norm" :
-		primer=inverComp(primer)                #the reversed complementary primer is used
-		indlook=indLeft                         #start the search at the match position of the first primer
-		resul=seq.find(primer,indlook)
-		while(resul!=-1) :                      #while there's a result
-			indRight.append(resul)          
-			indlook=indRight[-1]+1		#indlook get the position of the following nucleotide for the next search
-			resul=seq.find(primer,indlook)
-		
-		if len(indRight) ==0 :	                       #if no match found : try with one mismatch
-			lastTest=mix(2,primer,seq,2)             #mix with arg 2 : search only with the given primer, not the complementary
-			if lastTest != [] :
-				indRight.append(lastTest[0][0])   #indRight get the position of the first match found by mix()
-	else :						       #if sense=="inv" 
-		indlook=0
-		resul=seq.find(primer,indlook)
-		while(resul!=-1) :
-			indRight.append(resul)
-			indlook=indRight[-1]+1
-			resul=seq.find(primer,indlook)
-		
-		if len(indRight)==0 :
-			lastTest=mix(2,primer,seq,2) 
-			if lastTest != [] :
-				for i in range(len(lastTest)) :
-					indRight.append(lastTest[0][0])
-	return indRight
+def mismatches (nb,primer,seq,nbmismatch) :
+	match = []
+	sense = []
+	invP=inverComp(primer)	
+	if nb==1 :
+		tmpfind_forward = search_matches(nbmismatch,primer,seq) 		#get all matches (two mismatches)
+		positions_f = positionsOfMatches(tmpfind_forward,seq)			#get positions of matches
+		if tmpfind_forward == [] :
+			tmpfind_reverse = search_matches(nbmismatch,invP,seq)			#get the match(es) with two mismatch (use of regex.findall())
+			positions_r = positionsOfMatches(tmpfind_reverse,seq)		#get the position(s) of match(es)
+			if tmpfind_reverse != [] :
+				for res in positions_r :
+					match.append(res[0])
+					sense.append("inv")
+		else :
+			for res in positions_f :
+				match.append(res[0])
+				sense.append("norm")
 
-def find(primers,text,round) : #main function : return the result of the matches 
+	elif nb==2 :
+		tmpfind_forward = search_matches(2,primer,seq) 			#get all matches
+		positions_f = positionsOfMatches(tmpfind_forward,seq)		#get positions of matches
+		if tmpfind_forward != [] :
+			for res in positions_f :
+				match.append(res[0])
+				sense.append("norm")
+	return (match,sense)
+
+
+def findFirst (primer,seq,nbmismatch) :          		#first search of the primer on the sequence (use inverComp() and mismatch())
+
+	match = []
+	sense = []                    				#to store the sense of search (normal or inversed) 
+	if nbmismatch == 0 :
+		result=seq.find(primer)
+		while (result!=-1) :          			#while the search has not been made on the entire sequence               
+			match.append(result)             
+			position=result+1     			#next search will start one nucleotide after the position of the last match
+			sense.append("norm")
+			result=seq.find(primer,position)	#next search, if no more match : resul = -1 -> end of the loop
+
+		if match == [] :                         	#if no perfect match found with the regular primer 
+			primer_inv=inverComp(primer)		#get the inversed complementary primer with inverComp()
+			result=seq.find(primer_inv)
+			while(result!=-1):			#same search with the converted primer
+				match.append(result)                 
+				position=result+1   
+				sense.append("inv")
+				result=seq.find(primer_inv,position) 
+
+	if nbmismatch == 1 and match == [] :                    	#if still no matches (perfect match)
+		match,sense = mismatch(1,primer,seq)       		#search with a mismatch 
+
+	if nbmismatch >= 2 and match == [] :
+		match,sense = mismatches(1,primer,seq,nbmismatch)				
+
+	return (match,sense)
+
+def findSec(primer,seq,sense,nbmismatch) : 				#search a match for the second primer
+	match = []
+	if sense == "norm" : primer=inverComp(primer)
+	if nbmismatch == 0 :
+		result=seq.find(primer)
+		while(result!=-1) :                      	#while there's a result
+			match.append(result)          
+			position=result+1			#indlook get the position of the following nucleotide for the next search
+			result=seq.find(primer,position)
+
+	if nbmismatch == 1 and match == [] :            		#if no perfect match
+		match,trash = mismatch(2,primer,seq)	
+
+	if nbmismatch >= 2 and match == [] :
+		match,trash = mismatches(2,primer,seq,nbmismatch)
+		
+	return match
+
+def find2(primers,fasta,round,nbmismatch) : 				#return the result of the matches 
 	
-	text = text.replace(" ","").replace("\t","")   #delete spaces and tabulations
-	#primers = primers.split("\n") 
-	#if primers[-1] =="" :
-	#	del primers[-1]               
+	fasta = fasta.replace(" ","").replace("\t","")		#delete spaces and tabulations
 
 	if type(round) is str :
 		round = round.replace(",",".") 
 		round = float(round)                       
 	
-	files = text.split('>')                        #split the fasta files into a list of fasta file
-	del files[0]                                   #delete the '' created
-	tabRes = {}
+	sequences = fasta.split('>')				#split the fasta files into a list of fasta file
+	del sequences[0]					#delete the '' created
+	dico_res = {}
 
-	for f in xrange(len(files)) :                  #for each fasta sequence 
-		text=">"+files[f]                      
-		tmpSeq=text.split('\n')                
-		titleSeq=tmpSeq[0]                     #get the name of the fasta file
-		del tmpSeq[0]		               #del the header of the fasta file to keep only the sequence
-		text=''.join(tmpSeq).upper()           #merge the sequence list into a single string
+	for seq in sequences :
+		tmp_seq = seq.split("\n")
+		title_seq = tmp_seq[0]
+		del tmp_seq[0]
+		seq = "".join(tmp_seq).upper()
 
-		if primers :                           #if primers had been entered
-			for i in range(len(primers)) :
-				primer = primers[i].replace(" ",";").replace("\t",";").split(";")        #split the primers name, and primers into a list
-				detPrimer = primer[0].split('_')                                         #split differents elements of the name into a list
-				tabIndLeft = findFirst(primer[1],text)                                   #search match with findFirst() : primer[1]=primer, text=fasta
-				tabIndRight = []
-				resul = []
-				for ind in range(len(tabIndLeft[0])) :                                                      #parse result(s) of findfirst to do the second search with findsec()
-					tabIndRight.append(findSec(primer[2],text,tabIndLeft[0][ind],tabIndLeft[1][ind]))   #get result(s) of findsec with the second primer
-					if tabIndRight != [] :
-						for ind2 in range(len(tabIndRight[0])) :                                  
-							if tabIndLeft[1][ind]=="inv" :                                      #if the first match is made with the reversed complementary first primer
-								size = abs(int(tabIndLeft[0][ind])-int(tabIndRight[ind][ind2])+len(primer[1])) 	
-								size2 = int(tabIndLeft[0][ind])+len(primer[1])+(len(text)-tabIndRight[ind][ind2]) #if primers are separated by the splitted area in the sequence (circular chromosome)
-								if size2 < size : size = size2 							  #if the pattern repetition is between the end and the beginning of the sequence 
-								#print int(tabIndLeft[0][ind]),int(tabIndRight[ind][ind2]),size, size2, len(text)
-							else :
-								size = abs(int(tabIndRight[ind][ind2])-int(tabIndLeft[0][ind])+len(primer[2])) 
-								size2 = int(tabIndRight[ind][ind2])+len(primer[2])+(len(text)-tabIndLeft[0][ind])
-								#print int(tabIndLeft[0][ind]),int(tabIndRight[ind][ind2]),size, size2, len(text)								
-								if size2 < size : size = size2
-							sizeU = abs(float(detPrimer[3].upper().replace("U",""))-\
-								((float(detPrimer[2].lower().replace("bp",""))-size)\
-								/float(detPrimer[1].lower().replace("bp",""))))                            #computation of the sizeU value
-							resul.append([primer[0],tabIndLeft[0][ind],tabIndRight[ind][ind2],size,sizeU])  
+		if primers :					#if primers had been entered
+			for primer in primers :			#for each couple of primers 
+				primer = primer.replace(" ",";").replace("\t",";").split(";")
+				primer_info = primer[0].split('_')
+				first_match = findFirst(primer[1],seq,nbmismatch)		#search match(es) for the first primer 
+				second_match = []
+				result = []
+				for i,pos_match in enumerate(first_match[0]) :
+					second_match.extend(findSec(primer[2],seq,first_match[1][i],nbmismatch))	#search match(es) for the second primer
+					if second_match != [] :						#if there is a match with the second primer on the complementary DNA sequence
+						for pos_match2 in second_match :			#for each match found for the second primer
+								if first_match[1][i] == "inv" :
+									size = abs(int(pos_match)-int(pos_match2)+len(primer[1])) 	
+									size2 = int(pos_match)+len(primer[1])+(len(seq)-pos_match2)	#if primers are separated by the splitted area in the sequence (circular chromosome)
+									if size2 < size : size = size2
+								else :
+									size = abs(int(pos_match2)-int(pos_match)+len(primer[2])) 
+									size2 =int(pos_match2)+len(primer[2])+(len(seq)-pos_match)
+									if size2 < size : size = size2								
 
-				if len(resul) == 0 and detPrimer[0] not in tabRes :    #if no result
-					tabRes[detPrimer[0]]=[primer[0],"","","",""]   
+								sizeU = abs(float(primer_info[3].upper().replace("U",""))-\
+									((float(primer_info[2].lower().replace("bp",""))-size)\
+									/float(primer_info[1].lower().replace("bp",""))))		#computation of sizeU
+								result.append([primer[0],pos_match,pos_match2,size,sizeU])
+								
+				if len(result) == 0 and primer_info[0] not in dico_res.keys() :	#if no result
+					dico_res[primer_info[0]]=[["\t".join([primer[0],primer[1],primer[2]])],"","","",""]	
 
-				if (len(resul)>0) :                                    #if result(s)
-					ind=0
-					for j in range(len(resul)) :                   #keep the result with the minimum sizeU value
-						if (resul[ind][4]>resul[j][4]) : ind=j
+				elif len(result) > 0 :						#if result(s)
+					best_res = result[0]
+					for res in result :					#keep the result with the minimum sizeU value
+						if res[4]<best_res[4] : best_res=res	
 
-					if round !="" and round>0 :                    #round of the sizeU value
-						sizeU=resul[ind][4]
+					if round !="" and round>0 :                    		#round of the sizeU value
+						sizeU=best_res[4]
 						if sizeU>=math.floor(sizeU) and sizeU<(math.floor(sizeU)+round) :
 							sizeU = math.floor(sizeU)
 						elif sizeU <= math.ceil(sizeU) and sizeU>(math.ceil(sizeU)-round) :
 							sizeU=math.ceil(sizeU)
 						else :
 							sizeU=math.floor(sizeU)+0.5
-						resul[ind][4]=sizeU                    #set of the rounded sizeU value
-					tabRes[detPrimer[0]]=resul[ind]                #set the best result as a new key : value in the dictionnary #replace the old dictionnary value if there is one
-	return tabRes
+						best_res[4]=sizeU				#set of the rounded sizeU value
+					dico_res[primer_info[0]]=best_res			#set the best result as a new key : value in the dictionnary #replace the old dictionnary value if there is one
+	return dico_res
 
 Primers = Primers.split("\n")
 if Primers[-1]=="" :
 	del Primers[-1]
 Primers_short = [ pri.split("_")[0] for pri in Primers ]
 
-def main() : #run find() for each genome file in the directory with all primers in the primers file
+def get_empty_locus (dico_result) :
+	tmpprimers = []
+	for locus in dico_result.keys() :
+		if dico_result[locus][-1] == '' :
+			tmpprimers.extend(dico_result[locus][0])
+	return tmpprimers
+
+
+def main() : #run find2() for each genome file in the directory with all primers in the primers file
 	for i,file in enumerate(files) :
-		print file
+		print file, "\t strain ",i+1,"/",len(files)
 		pathfile = fasta_path+"/"+file
 		fasta = open(pathfile,"r").read()
 		fasta_names = []
@@ -244,15 +251,27 @@ def main() : #run find() for each genome file in the directory with all primers 
 			if ">" in line :
 				fasta_names.append(line.replace("\n","").split("|")) 
 
-		result = find(Primers,fasta,0.25) 
-					
+		print "Primers 0 mismatch : ",len(Primers)
+		result = find2(Primers,fasta,0.25,0) #no mismacth
+		tmpPrimers = get_empty_locus(result)
+		print "tmpPrimers 1 mismatch : ",len(tmpPrimers)
+		if tmpPrimers != [] :
+			tmp_dico = find2(tmpPrimers,fasta,0.25,1) #one mismatch
+			result = dict(result.items() + tmp_dico.items())
+
+		tmpPrimers = get_empty_locus(result)
+		print "tmpPrimers 2 mismatches : ",len(tmpPrimers)
+		if tmpPrimers != [] :
+			tmp_dico = find2(tmpPrimers,fasta,0.25,2) #two mismatch
+			result = dict(result.items() + tmp_dico.items())
+				
 		locus=[]
 		mlva_score=[]
 		for Primer in Primers_short :
 			locus.append(Primer.split("_")[0])
 			mlva_score.append(str(result[Primer][4]))
 		if i==0 : 
-			pathfile = "/home/david/Documents/MLVA/mlva_results/MLVA_analysis_"+fasta_path.split("/")[-1]+".csv"	
+			pathfile = "/home/david/Documents/MLVA/mlva_results/MLVA_analysis2_"+fasta_path.split("/")[-1]+".csv"	
 			if os.path.exists(pathfile) :
 				pathfile = pathfile.split(".")[0]+"_bis.csv"
 			output = open(pathfile,"w") 				#output is a csv file (delimiter=";")
@@ -262,26 +281,44 @@ def main() : #run find() for each genome file in the directory with all primers 
 	output.close()
 	print "MLVA analysis finished for "+fasta_path.split("/")[-1]
 
-main()
+#main()
 
 
-#Ochrobactrum_anthropi_ATCC_49188_NC_009667.1_NC_009668.1.fa
-#Bruce51-80_15bp_74bp_2u	TGACATGATGCAGAAAATGCA	GTCCCTTGCCGCCTTTCA
-#Brucella_abortus_NZ_CP007700.1_NZ_CP007701.1.fa
-#Bruce02-1923_339bp_787bp_3u	AACGCAGCATCACCAATGT	CCCAGATGTTCGGCTATAGTATG
-"""
-with open("/home/david/Documents/complete_genomes/brucellaceae/Brucella_abortus_NZ_CP007700.1_NZ_CP007701.1.fa","r") as myfile :  #load of the fasta file
+
+with open("/home/david/Documents/complete_genomes/brucellaceae/Ochrobactrum_anthropi_ATCC_49188_NC_009667.1_NC_009668.1.fa","r") as myfile :  #load of the fasta file
 	raw_fasta=myfile.read()
 	myfile.seek(1)	
 	tmp = myfile.read().split(">")
 	chr1 = tmp[0].replace("\n","")
 	chr2 = tmp[1].replace("\n","")
 	fasta = chr1+chr2
+#Bruce06-1322_134bp_408bp_3u	ATGGGATGTGGTAGGGTAATCG	GCGTGACAATCGACTTTTTGTC
+#Bruce11-211_63bp_257bp_2u	CTGTTGATCTGACCTTGCAACC	CCAGACAACAACCTACGTCCTG
+#Bruce42-424_125bp_539bp_4u	CATCGCCTCAACTATACCGTCA	ACCGCAAAATTTACGCATCG
+#Bruce22-322_8bp_158bp_6u	GATGAAGACGGCTATCGACTG	TAGGGGAGTATGTTTTGGTTGC
+#Bruce05-1365_8bp_185bp_3u	AAGTATCAGGAAGGGCAGGTTC	GGGAGTAGGGGAATAAGGGAAT
+#Bruce02-1923_339bp_787bp_3u	AACGCAGCATCACCAATGT	CCCAGATGTTCGGCTATAGTATG
+#Bruce59-33_9bp_256bp_7u	CGTATCATCCGGCAATGG	CTTTCTCTTTGTCGTGGGCTT
+#print mismatch(1,"GCGTGACAATCGACTTTTTGTC",chr1)
 
-#print mix(1,"TGACATGATGCAGAAAATGCA",chr1,2)
-#print mix(1,"GTCCCTTGCCGCCTTTCA",chr1,2)
-#print findFirst("TGACATGATGCAGAAAATGCA",chr1)
-#print findSec("GTCCCTTGCCGCCTTTCA",chr1,"1031268","inv")
-print find(["Bruce02-1923_339bp_787bp_3u	AACGCAGCATCACCAATGT	CCCAGATGTTCGGCTATAGTATG"],raw_fasta,0.25)
+find2(Primers,raw_fasta,0.25,2)
+
+"""
+print findFirst("CGTATCATCCGGCAATGG",chr1,2)
+print findSec ("CTTTCTCTTTGTCGTGGGCTT",chr1,"norm",2)
+dico = find2(["Bruce59-33_9bp_256bp_7u	CGTATCATCCGGCAATGG	CTTTCTCTTTGTCGTGGGCTT"],raw_fasta,0.25,2)
+for key in dico.keys() :
+	print key,dico[key]
+print len(dico.keys())
+tmpP = get_empty_locus(dico)
+print tmpP
+tmp_dico = find2(tmpP,raw_fasta,0.25,1)
+dico = dict(dico.items() + tmp_dico.items())
+tmpP = get_empty_locus(dico)
+print tmpP
+tmp_dico = find2(tmpP,raw_fasta,0.25,2)
+dico = dict(dico.items() + tmp_dico.items())
+for primer in Primers_short :
+	print  primer, str(dico[primer][4])
 """
 
