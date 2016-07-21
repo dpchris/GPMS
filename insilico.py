@@ -339,6 +339,7 @@ def main() : #run find() for each genome file in the directory with all primers 
 			fasta_path = arg
 			if fasta_path[-1]=="/" : fasta_path=fasta_path[:-1]
 			files = os.listdir(fasta_path)
+			files=sorted(files)
 		elif opt in ("-p", "--primer"): 
 			Primers = open(arg,"r").read()
 		elif opt in ("-o", "--output"):
