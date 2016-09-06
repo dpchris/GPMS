@@ -6,7 +6,7 @@ import re, regex, math, sys, os.path, pickle, getopt, csv
 dico_comp = {'A':'T','C':'G',"G":"C","T":"A","M":"K","R":"Y","W":"W","S":"S","Y":"R","K":"M","V":"B","H":"D","D":"H","B":"V","X":"X","N":"X",".":".","|":"|"}
 #dico_ref = pickle.load(open("/home/david/Documents/MLVA/dico_table_ref","r"))
 
-def inverComp (seq) :					#return the inversed complementary sequence
+def inverComp (seq) :					#return the inversed complementary sequence : TTCGA -> TCGAA
 	seq = seq.upper()                  		#acgt -> ACGT
 	seq_comp = ""
 	for nuc in seq :                   		#nuc stand for nucleotide
@@ -63,26 +63,26 @@ def clean_mismatches (nbprimer,primer,sense_list,found_list) : #return the misma
 
 
 
-def mismatch (nb,primer,seq) : 				#function to find match(s) with a mismatch
+def mismatch (nb,primer,seq) : #function to find match(s) with a mismatch
 	match = []
 	sense = []
 	tmp_res = set()
 	mismatches = []
 	if nb==1 :
 		invP=inverComp(primer)
-		for i in range(len(primer)): 		#for each nucleotide of the primer
+		for i in range(len(primer)): 				#for each nucleotide of the primer
 			reg1=primer[:i]
 			reg2=primer[i+1:]
 			reg = str(reg1) + "["+"".join(dico_comp.keys()).replace("|","").replace(".","")+"]" + str(reg2)
-			searchseq = re.compile(reg)           	 	#search request for finditer (Primer with a mismatch)
-			tmpfinditer = searchseq.finditer(seq)  		#tmpfinder : objects list with start() end() and group(0) functions
+			searchseq = re.compile(reg)           	 								#search request for finditer (Primer with a mismatch)
+			tmpfinditer = searchseq.finditer(seq)  									#tmpfinder : objects list with start() end() and group(0) functions
 			tmp= set()
-			for m in tmpfinditer :                 		#for each result
-				tmp.add("_".join([str(m.start()),"norm",m.group()]))	 		#add the result in the tmp list
-			if tmp :                         		#if results, we add the first result in listFind
+			for m in tmpfinditer :                 									#for each result
+				tmp.add("_".join([str(m.start()),"norm",m.group()]))	 					#add the result in the tmp list
+			if tmp :                         									#if results, we add the first result in listFind
 				for res in tmp :
 					tmp_res.add(res)	
-			else :                                 		#same search with the complementary reversed primer
+			else :                                 									#same search with the complementary reversed primer
 				reg1=invP[:i]
 				reg2=invP[i+1:]
 				reg = str(reg1) + "["+"".join(dico_comp.keys()).replace("|","").replace(".","")+"]" + str(reg2) #search request for one mismatch
@@ -223,9 +223,9 @@ def find(primers,fasta,round,nbmismatch) : 			#return the result of the matches
 				result = []
 				insert=""
 				mismatchs2 = []
-				for i,pos_match in enumerate(first_match[0]) :						#for each match of the first primer
-					tmp, mismatchs2 = findSec(primer[2],seq,first_match[1][i],nbmismatch)		#search match(es) for the second primer
-					if mismatchs2 != [] : mismatchs2 = clean_mismatches(2,primer[2],tmp2,mismatchs2) #lower the mismatched nucleotides 
+				for i,pos_match in enumerate(first_match[0]) :							#for each match of the first primer
+					tmp, mismatchs2 = findSec(primer[2],seq,first_match[1][i],nbmismatch)			#search match(es) for the second primer
+					if mismatchs2 != [] : mismatchs2 = clean_mismatches(2,primer[2],tmp2,mismatchs2) 	#lower the mismatched nucleotides 
 					second_match.extend(tmp)							
 					if second_match != [] :								#if there is a match with the second primer on the complementary DNA sequence
 						for pos_match2 in second_match :					#for each match found for the second primer
@@ -273,21 +273,21 @@ def find(primers,fasta,round,nbmismatch) : 			#return the result of the matches
 					dico_res[primer_info[0]]=best_res			#set the best result as a new key : value in the dictionnary #replace the old dictionnary value if there is one
 	return dico_res
 
-def get_empty_locus (dico_result) :
+def get_empty_locus (dico_result) : #return primers with no result 
 	tmpprimers = []
 	for locus in dico_result.keys() :
 		if dico_result[locus][4] == '' :
 			tmpprimers.append(dico_result[locus][0])
 	return tmpprimers
 
-def run (Primers,fasta,round,nbmismatch) :
+def run (Primers,fasta,round,nbmismatch) : #search MLVA with perfect match, then allow one additional mismatch for locus with no result until the number max of mismatch allowed 
 	tmp = len(Primers)
 	tmpPrimers = Primers
 	result = {}
 	for mismatch_allowed in range(int(nbmismatch)+1) :
-		tmp_dico = find(tmpPrimers,fasta,round,mismatch_allowed) 			#no mismacth
-		result = dict(result.items() + tmp_dico.items())
-		tmpPrimers = get_empty_locus(result)
+		tmp_dico = find(tmpPrimers,fasta,round,mismatch_allowed) 			#search with no mismacth
+		result = dict(result.items() + tmp_dico.items())				#add results to the dictionnary
+		tmpPrimers = get_empty_locus(result)						#only keep locus with no result
 		nb_match = tmp -len(tmpPrimers) 
 		print "results with",mismatch_allowed,"mismatch : ",nb_match,"/",len(Primers)
 
@@ -301,22 +301,26 @@ def run (Primers,fasta,round,nbmismatch) :
 
 	return result
 
-def usage() :
-	print "./insilico2.py -i <input_directory> -o <output_directory> -p <primers_file> [option -c for contigs]"  
+def usage() : #example of command to use insilico.py 
+	print "./insilico2.py -i <input_directory> -o <output_directory> -p <primers_file> [option -c for contigs] [option -m x for number of mismatch]"  
 
 def main() : #run find() for each genome file in the directory with all primers in the primers file
+
+	if len(sys.argv)<2 : 
+		usage()
+		sys.exit(2)
 	
-	try:
+	try:		#check if correct args
 		opts, args = getopt.getopt(sys.argv[1:], "hm:i:o:p:c", ["help", "mismatch=", "input=", "output=", "primer=", "contig"])
 	except getopt.GetoptError as err:
 		usage()
 		sys.exit(2)
-	nb_mismatch = 2
+	nb_mismatch = 2		#default value for the number of mismatch allowed 
 	global sequence
 	sequence = "chr"
 	global contig 
 	contig = False
-	for opt, arg in opts:
+	for opt, arg in opts: #get args given by user
 		if opt in ("-h", "--help"):
 			usage()
 			sys.exit()
@@ -338,8 +342,7 @@ def main() : #run find() for each genome file in the directory with all primers 
 		else:
 			assert False, "unhandled option"
 
-	header = ["strain","primer","position1","position2","size","score",sequence
-				,"nb_mismatch","primer1","mismatch1","primer2","mismatch2","insert"]
+	header = ["strain","primer","position1","position2","size","allèle",sequence,"nb_mismatch","primer1","mismatch1","primer2","mismatch2","insert"]
 	cr=[header]
 
 	Primers = Primers.split("\n")
@@ -410,9 +413,9 @@ def main() : #run find() for each genome file in the directory with all primers 
 			if i==0 :
 				pathfile = output_path+"MLVA_analysis_"+fasta_path.split("/")[-1]+".csv"
 				output = open(pathfile,"w") 								#output is a csv file (delimiter=";")
-				output.write(";".join(["key","Access_number"]+locus+header_mismatch)+"\n")  			#header
+				output.write(";".join(["key","Access_number"]+locus+header_mismatch)+"\n")  		#header
 				output = open(pathfile,"a")
-			output.write(str(i+1).zfill(3)+";"+file+";".join(mlva_score+mismatch) + "\n")
+			output.write(str(i+1).zfill(3)+";"+file+";"+";".join(mlva_score+mismatch) + "\n")
 	out = csv.writer(open(output_path+fasta_path.split("/")[-1]+"_output.csv","w"), delimiter=';',quoting=csv.QUOTE_ALL)
 	for row in cr :
 		out.writerow(row)
